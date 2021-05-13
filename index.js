@@ -229,7 +229,6 @@ function main() {
                         dist -= 0.1;
                         Avatar.position.y -= 0.1;
                     }
-                    // var dist = intialVelocity * (time) - 2 * (10) * (time * time);
 
 
                     break;
