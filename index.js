@@ -163,7 +163,7 @@ function main() {
 
             const detail = 2;
 
-            var avatarGeometry = new THREE.IcosahedronGeometry(radius, detail);
+            var avatarGeometry = new THREE.IcosahedronGeometry(radius);
             var k = makeInstance(avatarGeometry, new THREE.Color(Math.random(), Math.random(), Math.random()), [0, 0, 0], 0.01);
             scene.add(k);
             Avatar = k;
@@ -194,41 +194,44 @@ function main() {
     var theta = 0;
     var radiusTrain = 0.7;
     var time = 0;
+    var jumpUp = false;
     window.onload = () => {
         window.addEventListener('keydown', function(event) {
             switch (true) {
-                case event.key == "ArrowLeft":
+                case event.key == "ArrowLeft" && !isAvatarAttached:
                     Avatar.position.x -= 0.1;
                     break;
-                case event.key == "ArrowDown":
+                case event.key == "ArrowDown" && !isAvatarAttached:
                     Avatar.position.y -= 0.1;
                     break;
-                case event.key == "ArrowRight":
+                case event.key == "ArrowRight" && !isAvatarAttached:
                     Avatar.position.x += 0.1;
                     break;
-                case event.key == "ArrowUp":
+                case event.key == "ArrowUp" && !isAvatarAttached:
                     Avatar.position.y += 0.1;
                     break;
-                case event.key == "f":
+                case event.key == "f" && !isAvatarAttached:
                     Avatar.position.z += 0.1;
                     break;
-                case event.key == "b":
+                case event.key == "b" && !isAvatarAttached:
                     Avatar.position.z -= 0.1;
                     break;
                 case event.key == "u" && isAvatarAttached:
-                    time += 1;
-                    var intialVelocity = 10;
-                    var time = intialVelocity / 10;
-                    var velocity = intialVelocity - (10) * (time);
-                    var dist = intialVelocity * intialVelocity / (2 * 10);
-                    for (var i = 0; i < dist; i += 0.1) {
-                        Avatar.position.y = i;
-                    }
 
-                    while (dist > 0) {
-                        dist -= 0.1;
-                        Avatar.position.y -= 0.1;
-                    }
+                    // time += 1;
+                    jumpUp = true;
+                    count = 2;
+                    jumpDown = false;
+
+
+                    break;
+                case event.key == "d" && isAvatarAttached:
+
+                    // time += 1;
+                    jumpDown = true;
+                    jumpUp = false;
+                    count = 2;
+
 
 
                     break;
@@ -252,10 +255,15 @@ function main() {
     // gui.add(obj4, 'add').name('Jump or Attach');
     var isAvatarAttached = false;
     var leaderAttached;
+    var rotateAvatar = false;
     var settings = {
-            checkbox: false
-        }
-        // var IsJumpAttach = false;
+        checkbox: false,
+        rotate: false
+    }
+    gui.add(settings, 'rotate').onChange(function(value) {
+        rotateAvatar = true;
+    }).name("onRotation");
+    // var IsJumpAttach = false;
     gui.add(settings, 'checkbox').onChange(function(value) {
         // init();
         console.log(settings.checkbox);
@@ -291,8 +299,10 @@ function main() {
                         // console.log(allObjects);
                         // console.log("hit");
                         leaders[i].add(obj);
-                        obj.position.x = 0;
-                        obj.position.y = 0;
+                        if (!isAvatarAttached) {
+                            obj.position.x = 0;
+                            obj.position.y = 0;
+                        }
                         isAvatarAttached = true;
                         leaderAttached = leaders[i];
                         break;
@@ -303,8 +313,100 @@ function main() {
 
     }
 
+    function throwBallUp(time) {
+        var intialVelocity = 10;
+        var time = intialVelocity / 10;
+        var velocity = intialVelocity - (10) * (time);
+        var dist = intialVelocity * intialVelocity / (2 * 10);
+        for (var i = 0; i < dist; i += 0.1) {
+            console.log(i);
+
+            Avatar.position.y = i;
+
+
+
+
+        }
+
+        // while (dist > 0) {
+        //     dist -= 0.1;
+        //     Avatar.position.y -= 0.1;
+        // }
+    }
+    var timett = 0;
+    var jumpDown = false;
+    var count;
+    var isDragging = false;
+    var previousMousePosition = {
+        x: 0,
+        y: 0
+    };
+
+    function toRadians(angle) {
+        return angle * (Math.PI / 180);
+    }
+    document.addEventListener('mousedown', function(e) {
+        isDragging = true;
+    }, false);
+    document.addEventListener('mousemove', function(e) {
+        //console.log(e);
+        if (isAvatarAttached && settings.rotate) {
+            var deltaMove = {
+                x: e.offsetX - previousMousePosition.x,
+                y: e.offsetY - previousMousePosition.y
+            };
+
+            if (isDragging) {
+
+                var deltaRotationQuaternion = new THREE.Quaternion()
+                    .setFromEuler(new THREE.Euler(
+                        toRadians(deltaMove.y * 1),
+                        toRadians(deltaMove.x * 1),
+                        0,
+                        'XYZ'
+                    ));
+
+                Avatar.quaternion.multiplyQuaternions(deltaRotationQuaternion, Avatar.quaternion);
+            }
+
+            previousMousePosition = {
+                x: e.offsetX,
+                y: e.offsetY
+            };
+        }
+    }, false);
+
     function render(time) {
         time *= 0.001;
+        if (jumpUp && isAvatarAttached && count > 0) {
+            // throwBallUp(time);
+
+            if (timett < 4) {
+                Avatar.position.y += 0.01;
+                timett += 0.1;
+            } else {
+                jumpUp = false;
+                jumpDown = true;
+                timett = 0;
+                count -= 1;
+            }
+        }
+        if (jumpDown && isAvatarAttached && count > 0) {
+            // throwBallUp(time);
+            console.log(Avatar.position.y, timett);
+            if (timett < 4) {
+                Avatar.position.y -= 0.01;
+                timett += 0.1;
+            } else {
+                jumpDown = false;
+                jumpUp = true;
+                timett = 0;
+                count -= 1;
+            }
+        }
+
+
+
 
         if (resizeRendererToDisplaySize(renderer)) {
             const canvas = renderer.domElement;
