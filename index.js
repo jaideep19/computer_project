@@ -3,6 +3,7 @@ import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threej
 // import { GUI } from '/jsm/libs/dat.gui.module'
 // import * as dat from 'dat.gui';
 import { GUI } from './js/dat.gui.module.js';
+import { OrbitControls } from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/OrbitControls.js';
 // import * as dat from 'dat.gui';
 
 const gui = new GUI();
@@ -21,6 +22,9 @@ function main() {
     camera.position.z = 2;
 
     const scene = new THREE.Scene();
+    var avatarCamera = new THREE.PerspectiveCamera(fov, aspect, near, 10);
+    var droneCamera = new THREE.PerspectiveCamera(fov, aspect, near, 10);
+    droneCamera.position.z = 3;
 
     function resizeRendererToDisplaySize(renderer) {
         const canvas = renderer.domElement;
@@ -198,23 +202,53 @@ function main() {
     window.onload = () => {
         window.addEventListener('keydown', function(event) {
             switch (true) {
-                case event.key == "ArrowLeft" && !isAvatarAttached:
-                    Avatar.position.x -= 0.1;
+                case event.key == "ArrowLeft" && (!isAvatarAttached || settings.drone):
+
+                    if (settings.drone) {
+                        droneCamera.position.x -= 0.1;
+                    } else {
+                        Avatar.position.x -= 0.1;
+                    }
                     break;
-                case event.key == "ArrowDown" && !isAvatarAttached:
-                    Avatar.position.y -= 0.1;
+                case event.key == "ArrowDown" && (!isAvatarAttached || settings.drone):
+                    if (settings.drone) {
+                        droneCamera.position.y -= 0.1;
+                    } else {
+                        Avatar.position.y -= 0.1;
+                    }
+                    // Avatar.position.y -= 0.1;
                     break;
-                case event.key == "ArrowRight" && !isAvatarAttached:
-                    Avatar.position.x += 0.1;
+                case event.key == "ArrowRight" && (!isAvatarAttached || settings.drone):
+                    // Avatar.position.x += 0.1;
+                    if (settings.drone) {
+                        droneCamera.position.x += 0.1;
+                    } else {
+                        Avatar.position.x += 0.1;
+                    }
                     break;
-                case event.key == "ArrowUp" && !isAvatarAttached:
-                    Avatar.position.y += 0.1;
+                case event.key == "ArrowUp" && (!isAvatarAttached || settings.drone):
+                    // Avatar.position.y += 0.1;
+                    if (settings.drone) {
+                        droneCamera.position.y += 0.1;
+                    } else {
+                        Avatar.position.y += 0.1;
+                    }
                     break;
-                case event.key == "f" && !isAvatarAttached:
-                    Avatar.position.z += 0.1;
+                case event.key == "f" && (!isAvatarAttached || settings.drone):
+                    // Avatar.position.z += 0.1;
+                    if (settings.drone) {
+                        droneCamera.position.z += 0.1;
+                    } else {
+                        Avatar.position.z += 0.1;
+                    }
                     break;
-                case event.key == "b" && !isAvatarAttached:
-                    Avatar.position.z -= 0.1;
+                case event.key == "b" && (!isAvatarAttached || settings.drone):
+                    // Avatar.position.z -= 0.1;
+                    if (settings.drone) {
+                        droneCamera.position.z -= 0.1;
+                    } else {
+                        Avatar.position.z -= 0.1;
+                    }
                     break;
                 case event.key == "u" && isAvatarAttached:
 
@@ -258,11 +292,29 @@ function main() {
     var rotateAvatar = false;
     var settings = {
         checkbox: false,
-        rotate: false
+        rotate: false,
+        fpp: false,
+        drone: false,
     }
+    var fppAvatar = false;
+    var droneCamera;
     gui.add(settings, 'rotate').onChange(function(value) {
         rotateAvatar = true;
     }).name("onRotation");
+    gui.add(settings, 'fpp').onChange(function(value) {
+        fppAvatar = true;
+    }).name("fpp");
+    gui.add(settings, 'drone').onChange(function(value) {
+        fppAvatar = true;
+        //     const radius = 7;
+
+        //     const detail = 2;
+
+        //     var avatarGeometry = new THREE.IcosahedronGeometry(radius, detail);
+        //     var k = makeInstance(avatarGeometry, new THREE.Color(Math.random(), Math.random(), Math.random()), [0, 0, 0], 0.01);
+        //    droneCamera = k;
+        //     scene.add(k);
+    }).name("droneView");
     // var IsJumpAttach = false;
     gui.add(settings, 'checkbox').onChange(function(value) {
         // init();
@@ -341,6 +393,10 @@ function main() {
         x: 0,
         y: 0
     };
+    var avatarQuat = false;
+    document.body.appendChild(renderer.domElement);
+
+
 
     function toRadians(angle) {
         return angle * (Math.PI / 180);
@@ -350,7 +406,7 @@ function main() {
     }, false);
     document.addEventListener('mousemove', function(e) {
         //console.log(e);
-        if (isAvatarAttached && settings.rotate) {
+        if (Avatar && settings.rotate) {
             var deltaMove = {
                 x: e.offsetX - previousMousePosition.x,
                 y: e.offsetY - previousMousePosition.y
@@ -360,13 +416,16 @@ function main() {
 
                 var deltaRotationQuaternion = new THREE.Quaternion()
                     .setFromEuler(new THREE.Euler(
-                        toRadians(deltaMove.y * 1),
-                        toRadians(deltaMove.x * 1),
+                        toRadians(deltaMove.y * 0.11),
+                        toRadians(deltaMove.x * 0.11),
                         0,
                         'XYZ'
                     ));
 
                 Avatar.quaternion.multiplyQuaternions(deltaRotationQuaternion, Avatar.quaternion);
+                avatarCamera.quaternion.multiplyQuaternions(deltaRotationQuaternion, avatarCamera.quaternion);
+                avatarCamera.updateProjectionMatrix();
+                avatarQuat = true;
             }
 
             previousMousePosition = {
@@ -377,6 +436,13 @@ function main() {
     }, false);
 
     function render(time) {
+
+
+
+
+
+
+
         time *= 0.001;
         if (jumpUp && isAvatarAttached && count > 0) {
             // throwBallUp(time);
@@ -405,9 +471,11 @@ function main() {
             }
         }
 
+        if (!settings.rotate) {
+            avatarQuat = false;
+        }
 
-
-
+        // console.log(avatarCamera);
         if (resizeRendererToDisplaySize(renderer)) {
             const canvas = renderer.domElement;
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
@@ -421,9 +489,50 @@ function main() {
         trainLeader.position.x = radiusTrain * (angles[0]);
         trainLeader.position.y = radiusTrain * (angles[1]);
         // }
+        if (settings.fpp && isAvatarAttached) {
+            if (!avatarQuat) {
+                var k = theta + 0.1;
+                var angles = getAnglevalues(k);
+                avatarCamera.position.x = Avatar.position.x;
+                avatarCamera.position.y = Avatar.position.y;
+                // avatarCamera.position.z=Avatar.position.z;
+                avatarCamera.position.x = radiusTrain * (angles[0]);
+                avatarCamera.position.y = radiusTrain * (angles[1]);
+                avatarCamera.lookAt(new THREE.Vector3(radiusTrain * (angles[0]), radiusTrain * (angles[0]), 0));
+                avatarCamera.up = new THREE.Vector3(0, 0, 1);
+                // const avatarCameraControls = new OrbitControls(avatarCamera, renderer.domElement);
+                // avatarCameraControls.update();
+            } else {
+                avatarCamera.position.x = Avatar.position.x;
+                avatarCamera.position.y = Avatar.position.y;
+                avatarCamera.updateProjectionMatrix();
+            }
 
-        renderer.render(scene, camera);
+            renderer.render(scene, avatarCamera);
 
+
+        } else if (settings.fpp && Avatar) {
+            avatarCamera.position.x = Avatar.position.x;
+            avatarCamera.position.y = Avatar.position.y;
+            avatarCamera.lookAt(new THREE.Vector3(1, 0, 0));
+            // const avatarCameraControls = new OrbitControls(avatarCamera, renderer.domElement);
+            // avatarCameraControls.update();
+            renderer.render(scene, avatarCamera);
+
+        } else if (settings.drone) {
+
+            droneCamera.position.x = droneCamera.position.x;
+            droneCamera.position.y = droneCamera.position.y;
+            droneCamera.lookAt(new THREE.Vector3(droneCamera.position.x, droneCamera.position.y, 0));
+            droneCamera.position.z = droneCamera.position.z;
+            // droneCamera.up = new THREE.Vector3(0, 0, 1);
+            renderer.render(scene, droneCamera);
+
+        } else {
+            renderer.render(scene, camera);
+        }
+
+        // console.log(droneCamera.position);
         requestAnimationFrame(render);
     }
 
